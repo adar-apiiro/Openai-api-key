@@ -1,15 +1,42 @@
 import os
-from openai import OpenAI
+import sys
+import argparse
+import logging
+import openai
 
-client = OpenAI(
-    # This is the default and can be omitted
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Simple OpenAI API client"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Enable DEBUG logging"
+    )
+    return parser.parse_args()
 
-response = client.responses.create(
-    model="gpt-4o",
-    instructions="You are a coding assistant that talks like a pirate.",
-    input="How do I check if a Python object is an instance of a class?",
-)
+def main():
+    # 1) Load your API key into openai.api_key
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    if not openai.api_key:
+        logging.critical("Missing OPENAI_API_KEY environment variable. Exiting.")
+        sys.exit(1)
 
-print(response.output_text)
+    # 2) Parse CLI args & configure logging
+    args = parse_args()
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s"
+    )
+
+    # 3) Make an example API call
+    logging.info("Sending test prompt to OpenAI…")
+    resp = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt="Say hello!",
+        max_tokens=5
+    )
+    print(resp.choices[0].text.strip())
+
+if __name__ == "__main__":
+    main()
